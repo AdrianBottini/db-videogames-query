@@ -1,0 +1,109 @@
+// Selezionare i dati di tutti giocatori che hanno scritto almeno una recensione, mostrandoli una sola volta.
+
+SELECT DISTINCT *
+FROM players
+WHERE id IN (
+    SELECT id
+    FROM reviews
+);
+
+// Sezionare tutti i videogame dei tornei tenuti nel 2016, mostrandoli una sola volta
+
+SELECT DISTINCT name
+FROM tournaments
+WHERE year = 2016;
+
+// Mostrare le categorie di ogni videogioco
+
+SELECT name
+FROM categories;
+
+// Selezionare i dati di tutte le software house che hanno rilasciato almeno un gioco dopo il 2020, mostrandoli una sola volta
+
+SELECT *
+FROM software_houses
+INNER JOIN videogames ON software_houses.id = videogames.software_house_id
+WHERE release_date > '2020-01-01';
+
+// Selezionare i premi ricevuti da ogni software house per i videogiochi che ha prodotto
+
+SELECT software_houses.name, COUNT(awards.id)
+FROM videogames
+INNER JOIN software_houses ON videogames.software_house_id = software_houses.id
+INNER JOIN award_videogame ON videogames.id = award_videogame.videogame_id
+INNER JOIN awards ON award_videogame.award_id = awards.id
+WHERE awards.id IS NOT NULL
+GROUP BY software_houses.name;
+
+// Selezionare categorie e classificazioni PEGI dei videogiochi che hanno ricevuto recensioni da 4 e 5 stelle, mostrandole una sola volta
+
+SELECT DISTINCT categories.name, pegi_labels.name 
+FROM categories 
+JOIN category_videogame ON categories.id = category_videogame.category_id 
+JOIN videogames ON category_videogame.videogame_id = videogames.id 
+JOIN pegi_label_videogame ON videogames.id = pegi_label_videogame.videogame_id 
+JOIN pegi_labels ON pegi_labels.id = pegi_label_videogame.pegi_label_id 
+JOIN reviews ON reviews.rating = 4 OR reviews.rating = 5
+
+// Selezionare quali giochi erano presenti nei tornei nei quali hanno partecipato i giocatori il cui nome inizia per 'S'
+
+SELECT *
+FROM videogames
+JOIN tournament_videogame ON videogames.id = tournament_videogame.videogame_id
+JOIN tournaments ON tournament_videogame.tournament_id = tournaments.id
+JOIN player_tournament ON tournaments.id = player_tournament.tournament_id
+JOIN players ON player_tournament.player_id = players.id
+WHERE players.name LIKE 'S%';
+
+// Selezionare le città in cui è stato giocato il gioco dell'anno del 2018
+
+SELECT city
+FROM tournaments
+INNER JOIN tournament_videogame ON tournament_videogame.tournament_id = tournaments.id
+INNER JOIN videogames ON videogames.id = tournament_videogame.videogame_id
+INNER JOIN award_videogame ON award_videogame.videogame_id = videogames.id
+INNER JOIN awards ON awards.id = award_videogame.award_id
+WHERE tournaments.year = 2018 AND awards.name LIKE 'Gioco dell%anno';
+
+// Selezionare i giocatori che hanno giocato al gioco più atteso del 2018 in un torneo del 2019
+
+SELECT DISTINCT player_name
+FROM players
+WHERE game_name = 'Gioco più atteso' AND year = 2018 AND tournament_year = 2019;
+
+// Selezionare i dati della prima software house che ha rilasciato un gioco, assieme ai dati del gioco stesso (software house id : 5)
+
+SELECT *
+FROM software_house
+WHERE id = 5
+ORDER BY release_date ASC
+LIMIT 1;
+
+// Selezionare i dati del videogame (id, name, release_date, totale recensioni) con più recensioni (videogame id : 398)
+
+SELECT id, name, release_date, COUNT(*) AS totale_recensioni
+FROM videogame
+JOIN review ON videogame.id = review.videogame_id
+WHERE videogame.id = 398
+GROUP BY videogame.id
+ORDER BY totale_recensioni DESC
+LIMIT 1;
+
+// Selezionare la software house che ha vinto più premi tra il 2015 e il 2016 (software house id : 1)
+
+SELECT software_house.id, software_house.name, COUNT(*) AS numero_premi_vinti
+FROM software_house
+JOIN premio ON software_house.id = premio.software_house_id
+WHERE YEAR(premio.data) BETWEEN 2015 AND 2016 AND software_house.id = 1
+GROUP BY software_house.id
+ORDER BY numero_premi_vinti DESC
+LIMIT 1;
+
+// Selezionare le categorie dei videogame i quali hanno una media recensioni inferiore a 2 (10)
+
+SELECT categoria.nome
+FROM categoria
+JOIN videogioco ON categoria.id = videogioco.categoria_id
+JOIN recensione ON videogioco.id = recensione.videogioco_id
+GROUP BY categoria.nome
+HAVING AVG(recensione.voto) < 2;
